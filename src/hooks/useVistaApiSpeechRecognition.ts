@@ -1,24 +1,21 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { SpeechRecognitionHook } from '../types';
 
-interface VistaApiOptions {
+// Get API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+interface VistaApiSpeechRecognitionOptions {
   /**
-   * API endpoint for speech recognition service
-   * @default 'http://178.183.101.202:3001/api/transcribe'
+   * API endpoint for transcription service
+   * @default from VITE_API_URL environment variable or http://localhost:3001/api/transcribe
    */
   apiEndpoint?: string;
   
   /**
-   * Language for transcription
+   * Language for speech recognition
    * @default 'en-US'
    */
   language?: string;
-  
-  /**
-   * Time slice for sending audio data (in milliseconds)
-   * @default 1000
-   */
-  timeSlice?: number;
   
   /**
    * MIME type for audio recording
@@ -28,176 +25,110 @@ interface VistaApiOptions {
 }
 
 /**
- * Hook for speech recognition using Vista API
+ * Hook for speech recognition using the Vista API
  * @param options Configuration options
  * @returns Speech recognition state and control functions
  */
 export function useVistaApiSpeechRecognition({
-  apiEndpoint = 'http://178.183.101.202:3001/api/transcribe',
+  apiEndpoint = `${API_URL}/api/transcribe`,
   language = 'en-US',
-  timeSlice = 1000,
   mimeType = 'audio/webm',
-}: VistaApiOptions = {}): SpeechRecognitionHook {
-  const [transcript, setTranscript] = useState('');
+}: VistaApiSpeechRecognitionOptions = {}): SpeechRecognitionHook {
   const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
   
-  // Check if the browser supports necessary APIs
-  const supported = useCallback(() => {
-    return !!(
-      navigator.mediaDevices &&
-      navigator.mediaDevices.getUserMedia &&
-      window.MediaRecorder
-    );
-  }, []);
-
-  // Clean up function to stop recording and release resources
-  const cleanupRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
-    
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    
-    mediaRecorderRef.current = null;
-    chunksRef.current = [];
-  }, []);
-
-  // Reset when component unmounts
+  // Check if the browser supports MediaRecorder
+  const supported = typeof window !== 'undefined' && 'MediaRecorder' in window;
+  
+  // Refs
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const audioChunks = useRef<Blob[]>([]);
+  
+  // Cleanup function
   useEffect(() => {
     return () => {
-      cleanupRecording();
+      if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
+        mediaRecorder.current.stop();
+      }
     };
-  }, [cleanupRecording]);
-
-  // Send audio data to API and get transcription
-  const sendAudioToApi = useCallback(async (audioBlob: Blob) => {
-    try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob);
-      formData.append('language', language);
-      
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success && result.data && result.data.rawText) {
-        setTranscript(prev => {
-          const newText = result.data.rawText.trim();
-          if (prev && !prev.includes(newText)) {
-            return `${prev} ${newText}`.trim();
-          }
-          return prev || newText;
-        });
-      } else if (result.error) {
-        throw new Error(result.error.message || 'Unknown API error');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to transcribe audio';
-      setError(errorMessage);
-      console.error('Transcription error:', err);
-    }
-  }, [apiEndpoint, language]);
-
-  // Start recording and listening
+  }, []);
+  
+  // Start listening function
   const startListening = useCallback(async () => {
-    if (!supported()) {
-      setError('Media recording is not supported in this browser');
+    if (!supported) {
+      setError('MediaRecorder is not supported in this browser');
       return;
     }
     
-    if (isListening) return;
-    
     try {
-      // Reset state
-      setError(undefined);
-      chunksRef.current = [];
-      
-      // Get audio stream
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
       
-      // Create media recorder
-      const recorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : 'audio/webm',
+      mediaRecorder.current = new MediaRecorder(stream, { mimeType });
+      audioChunks.current = [];
+      
+      mediaRecorder.current.addEventListener('dataavailable', (event) => {
+        if (event.data.size > 0) {
+          audioChunks.current.push(event.data);
+        }
       });
       
-      mediaRecorderRef.current = recorder;
-      
-      // Handle data available event
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
+      mediaRecorder.current.addEventListener('stop', async () => {
+        try {
+          const audioBlob = new Blob(audioChunks.current, { type: mimeType });
+          
+          // Create FormData
+          const formData = new FormData();
+          formData.append('audio', audioBlob);
+          formData.append('language', language);
+          
+          // Send to API
+          const response = await fetch(apiEndpoint, {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status} ${response.statusText}`);
+          }
+          
+          const result = await response.json();
+          
+          if (result.success && result.data && result.data.rawText) {
+            setTranscript(prev => prev + ' ' + result.data.rawText.trim());
+          } else if (result.error) {
+            throw new Error(result.error.message || 'Unknown API error');
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Unknown error');
+        } finally {
+          // Stop all tracks
+          stream.getTracks().forEach(track => track.stop());
+          setIsListening(false);
         }
-      };
+      });
       
-      // Handle recording stop
-      recorder.onstop = async () => {
-        setIsListening(false);
-        
-        if (chunksRef.current.length > 0) {
-          const audioBlob = new Blob(chunksRef.current, { type: mimeType });
-          await sendAudioToApi(audioBlob);
-          chunksRef.current = [];
-        }
-        
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-      };
-      
-      // Handle errors
-      recorder.onerror = (event) => {
-        setError('Recording error occurred');
-        setIsListening(false);
-        cleanupRecording();
-      };
-      
-      // Start recording
-      recorder.start(timeSlice);
+      mediaRecorder.current.start();
       setIsListening(true);
-      
+      setError(undefined);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to start recording';
-      setError(errorMessage);
-      console.error('Recording error:', err);
-      cleanupRecording();
+      setError(err instanceof Error ? err.message : 'Failed to start recording');
+      setIsListening(false);
     }
-  }, [supported, isListening, sendAudioToApi, mimeType, timeSlice, cleanupRecording]);
-
-  // Stop recording and listening
+  }, [supported, mimeType, language, apiEndpoint]);
+  
+  // Stop listening function
   const stopListening = useCallback(() => {
-    if (!isListening || !mediaRecorderRef.current) return;
-    
-    try {
-      if (mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-      }
-    } catch (err) {
-      console.error('Error stopping recording:', err);
-      cleanupRecording();
+    if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
+      mediaRecorder.current.stop();
     }
-  }, [isListening, cleanupRecording]);
-
-  // Reset transcript
+  }, []);
+  
+  // Reset transcript function
   const resetTranscript = useCallback(() => {
     setTranscript('');
   }, []);
-
+  
   return {
     transcript,
     isListening,
@@ -205,6 +136,6 @@ export function useVistaApiSpeechRecognition({
     stopListening,
     resetTranscript,
     error,
-    supported: supported(),
+    supported,
   };
 }
