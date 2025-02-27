@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Shopping List Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .app {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      padding: 2rem;
+      background-color: white;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="container">
+    <div class="header">
+      <h1 class="text-3xl font-bold mb-2">Voice Shopping List</h1>
+      <p class="text-gray-600">Create shopping lists with your voice</p>
+    </div>
+    
+    <div class="app" id="app">
+      <!-- Component will be mounted here -->
+      <p class="text-center text-gray-500">Loading component...</p>
+    </div>
+    
+    <div class="mt-8">
+      <h2 class="text-xl font-bold mb-4">How to Use</h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>Click <strong>Start Recording</strong> and speak your shopping items.</li>
+        <li>Try saying things like "milk, eggs, bread, and cheese".</li>
+        <li>You can also type items in the text field.</li>
+        <li>Upload an audio file of your shopping list.</li>
+        <li>Try voice commands like "clear list" or "delete last item".</li>
+        <li>Download your list in various formats.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script type="module">
+    // This is a simplified example assuming the component is properly bundled and available
+    // In a real implementation, you would import from your package
+    
+    // Simulated component for demo purposes
+    class VoiceShoppingList extends HTMLElement {
+      constructor() {
+        super();
+        this.innerHTML = `
+          <div class="voice-shopping-list">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold">Shopping List</h2>
+              <div class="flex space-x-2">
+                <select class="px-2 py-1 text-sm border border-gray-300 rounded-md">
+                  <option>Auto</option>
+                  <option>Browser API</option>
+                  <option>Vista API</option>
+                </select>
+                <select class="px-2 py-1 text-sm border border-gray-300 rounded-md">
+                  <option>Text</option>
+                  <option>CSV</option>
+                  <option>JSON</option>
+                  <option>HTML</option>
+                </select>
+                <button class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                  Download
+                </button>
+              </div>
+            </div>
+            
+            <div class="mb-6">
+              <div class="flex items-center space-x-2 mb-4">
+                <button class="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                  Start Recording
+                </button>
+                <div class="ml-3 text-sm text-gray-600">Using Browser API</div>
+                <form class="flex-1 ml-4">
+                  <input type="text" placeholder="Add an item..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </form>
+              </div>
+              
+              <div class="mt-4">
+                <div class="file-upload">
+                  <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-sm transition-colors">
+                    Upload Audio
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="border rounded-md">
+              <ul class="divide-y divide-gray-200">
+                <li class="flex items-center justify-between p-3 border-b border-gray-200 group bg-white">
+                  <div class="flex items-center flex-1">
+                    <input type="checkbox" class="w-4 h-4 mr-3 text-blue-600 rounded focus:ring-blue-500">
+                    <span class="flex-1 text-gray-800">Milk</span>
+                  </div>
+                  <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button class="text-blue-600 hover:text-blue-800" aria-label="Edit">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+                    <button class="text-red-600 hover:text-red-800" aria-label="Delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </li>
+                <li class="flex items-center justify-between p-3 border-b border-gray-200 group bg-white">
+                  <div class="flex items-center flex-1">
+                    <input type="checkbox" class="w-4 h-4 mr-3 text-blue-600 rounded focus:ring-blue-500">
+                    <span class="flex-1 text-gray-800">Eggs</span>
+                  </div>
+                  <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button class="text-blue-600 hover:text-blue-800" aria-label="Edit">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+                    <button class="text-red-600 hover:text-red-800" aria-label="Delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </li>
+                <li class="flex items-center justify-between p-3 border-b border-gray-200 group bg-gray-50">
+                  <div class="flex items-center flex-1">
+                    <input type="checkbox" checked class="w-4 h-4 mr-3 text-blue-600 rounded focus:ring-blue-500">
+                    <span class="flex-1 line-through text-gray-500">Bread</span>
+                  </div>
+                  <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button class="text-blue-600 hover:text-blue-800" aria-label="Edit">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+                    <button class="text-red-600 hover:text-red-800" aria-label="Delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            
+            <div class="flex justify-between mt-4 text-sm">
+              <div>
+                2 items left
+              </div>
+              <div class="space-x-4">
+                <button class="text-gray-600 hover:text-gray-800">
+                  Clear completed
+                </button>
+                <button class="text-red-600 hover:text-red-800">
+                  Clear all
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      connectedCallback() {
+        // This would contain the actual logic in a real component
+        console.log('Voice Shopping List component mounted');
+      }
+    }
+    
+    // Register the custom element
+    customElements.define('voice-shopping-list', VoiceShoppingList);
+    
+    // Add it to the DOM
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    app.appendChild(document.createElement('voice-shopping-list'));
+  </script>
+</body>
+</html>
