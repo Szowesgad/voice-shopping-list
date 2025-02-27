@@ -26,6 +26,7 @@ const DEFAULT_TITLE = import.meta.env.VITE_DEFAULT_TITLE || 'Shopping List';
 const DEFAULT_MAX_ITEMS = parseInt(import.meta.env.VITE_MAX_ITEMS || '100', 10);
 const DEFAULT_STORAGE_KEY = import.meta.env.VITE_STORAGE_KEY || 'voice-shopping-list';
 const DEFAULT_ENABLE_STORAGE = import.meta.env.VITE_ENABLE_STORAGE !== 'false';
+const USE_OPENAI_API = import.meta.env.VITE_USE_OPENAI_API === 'true';
 
 export const VoiceShoppingList: React.FC<VoiceShoppingListProps> = ({
   title = DEFAULT_TITLE,
@@ -224,6 +225,16 @@ export const VoiceShoppingList: React.FC<VoiceShoppingListProps> = ({
     downloadShoppingList(items, downloadFormat, title);
   }, [items, downloadFormat, title]);
   
+  // Get API method display name
+  const getMethodDisplayName = useCallback((method: RecognitionMethod) => {
+    switch (method) {
+      case 'browser': return 'Browser API';
+      case 'api': return 'Vista API';
+      case 'openai': return 'OpenAI Whisper';
+      default: return 'API';
+    }
+  }, []);
+  
   return (
     <div className={`voice-shopping-list ${className}`}>
       <div className="flex justify-between items-center mb-4">
@@ -238,7 +249,8 @@ export const VoiceShoppingList: React.FC<VoiceShoppingListProps> = ({
           >
             <option value="auto">Auto</option>
             <option value="browser">Browser API</option>
-            <option value="api">Remote API</option>
+            <option value="api">Vista API</option>
+            {USE_OPENAI_API && <option value="openai">OpenAI Whisper</option>}
           </select>
           
           {/* Download format selector */}
@@ -320,7 +332,7 @@ export const VoiceShoppingList: React.FC<VoiceShoppingListProps> = ({
           </button>
           
           <div className="ml-3 text-sm text-gray-600">
-            {activeMethod === 'browser' ? 'Using Browser API' : 'Using Remote API'}
+            Using {getMethodDisplayName(activeMethod)}
           </div>
           
           {/* Alternative text input */}
