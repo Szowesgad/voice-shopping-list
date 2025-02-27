@@ -19,13 +19,21 @@ import {
   downloadShoppingList
 } from '../utils';
 
+// Get environment variables with defaults
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const DEFAULT_LANGUAGE = import.meta.env.VITE_DEFAULT_LANGUAGE || 'en-US';
+const DEFAULT_TITLE = import.meta.env.VITE_DEFAULT_TITLE || 'Shopping List';
+const DEFAULT_MAX_ITEMS = parseInt(import.meta.env.VITE_MAX_ITEMS || '100', 10);
+const DEFAULT_STORAGE_KEY = import.meta.env.VITE_STORAGE_KEY || 'voice-shopping-list';
+const DEFAULT_ENABLE_STORAGE = import.meta.env.VITE_ENABLE_STORAGE !== 'false';
+
 export const VoiceShoppingList: React.FC<VoiceShoppingListProps> = ({
-  title = 'Shopping List',
+  title = DEFAULT_TITLE,
   placeholder = 'Add an item...',
-  language = 'en-US',
-  maxItems = 100,
-  storageKey = 'voice-shopping-list',
-  enableStorage = true,
+  language = DEFAULT_LANGUAGE,
+  maxItems = DEFAULT_MAX_ITEMS,
+  storageKey = DEFAULT_STORAGE_KEY,
+  enableStorage = DEFAULT_ENABLE_STORAGE,
   className = '',
   onListChange,
 }) => {
@@ -50,7 +58,7 @@ export const VoiceShoppingList: React.FC<VoiceShoppingListProps> = ({
   } = useCombinedSpeechRecognition({
     method: recognitionMethod,
     language,
-    apiEndpoint: 'http://178.183.101.202:3001/api/transcribe',
+    apiEndpoint: `${API_URL}/api/transcribe`,
   });
   
   // Load items from storage on mount
@@ -178,7 +186,7 @@ export const VoiceShoppingList: React.FC<VoiceShoppingListProps> = ({
       formData.append('audio', file);
       formData.append('language', language);
       
-      const response = await fetch('http://178.183.101.202:3001/api/transcribe', {
+      const response = await fetch(`${API_URL}/api/transcribe`, {
         method: 'POST',
         body: formData,
       });
@@ -230,7 +238,7 @@ export const VoiceShoppingList: React.FC<VoiceShoppingListProps> = ({
           >
             <option value="auto">Auto</option>
             <option value="browser">Browser API</option>
-            <option value="api">Vista API</option>
+            <option value="api">Remote API</option>
           </select>
           
           {/* Download format selector */}
@@ -312,7 +320,7 @@ export const VoiceShoppingList: React.FC<VoiceShoppingListProps> = ({
           </button>
           
           <div className="ml-3 text-sm text-gray-600">
-            {activeMethod === 'browser' ? 'Using Browser API' : 'Using Vista API'}
+            {activeMethod === 'browser' ? 'Using Browser API' : 'Using Remote API'}
           </div>
           
           {/* Alternative text input */}
