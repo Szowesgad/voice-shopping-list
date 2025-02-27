@@ -23,9 +23,35 @@ A React component for creating shopping lists using voice input. This component 
 - **Local Storage**: Persist lists between sessions
 - **Download Options**: Download list in various formats (TXT, CSV, JSON, HTML)
 
-## Installation
+## Quick Installation
 
-### NPM Package
+For a complete setup with both the server and frontend components, follow our magic 3-step sequence:
+
+```bash
+# Clone the repo
+git clone https://github.com/Szowesgad/voice-shopping-list.git
+cd voice-shopping-list
+
+# Step 1: Initialize the Whisper model
+cd server
+chmod +x model_init.sh
+./model_init.sh
+
+# Step 2: Start the transcription server
+chmod +x server_init.sh
+./server_init.sh
+
+# Step 3: In a new terminal, install and run the frontend
+cd ..
+chmod +x installation.sh
+./installation.sh
+```
+
+For detailed installation instructions, see [INSTALLATION.md](INSTALLATION.md).
+
+## Using as an NPM Package
+
+You can also use the component as an NPM package in your React projects:
 
 ```bash
 npm install voice-shopping-list
@@ -34,22 +60,6 @@ yarn add voice-shopping-list
 # or
 pnpm add voice-shopping-list
 ```
-
-### From Source
-
-For a complete development setup, use our automated installation script:
-
-```bash
-# Clone the repo
-git clone https://github.com/Szowesgad/voice-shopping-list.git
-cd voice-shopping-list
-
-# Run the installation script
-chmod +x installation.sh
-./installation.sh
-```
-
-For manual installation, see [INSTALLATION.md](INSTALLATION.md) for detailed instructions.
 
 ## Usage
 
