@@ -1,15 +1,26 @@
 # Voice Shopping List
 
-A simple React component for creating shopping lists using voice input. Speak your shopping items, and this component will convert your speech to text and organize it into a neat bullet-point list.
+A React component for creating shopping lists using voice input. This component provides a seamless way to create and manage shopping lists using speech recognition, with fallback to a remote speech-to-text API.
 
 ## Features
 
-- 🎤 Voice recording with browser's Web Speech API
-- 📝 Automatic conversion of speech to text
-- 🗂️ Smart formatting of recognized items into bullet points
-- 📱 Responsive design that works on desktop and mobile
-- ✅ Ability to edit, delete, and mark items as complete
-- 💾 Local storage to save your lists
+- **Voice Input**: Record your shopping items using your voice
+- **Text Input**: Traditional text input as an alternative
+- **Audio File Upload**: Upload audio recordings for transcription
+- **Multiple Speech Recognition Methods**:
+  - Browser's Web Speech API for local processing
+  - Vista API for server-side processing (`http://178.183.101.202:3001`)
+  - Automatic fallback if one method isn't available
+- **Voice Visualization**: Real-time audio visualization during recording
+- **Transcript Preview**: See what's being transcribed in real-time
+- **List Management**:
+  - Add, edit, delete items
+  - Mark items as complete
+  - Clear completed items
+  - Clear all items
+- **Command Recognition**: Special voice commands like "clear list", "delete last item"
+- **Local Storage**: Persist lists between sessions
+- **Download Options**: Download list in various formats (TXT, CSV, JSON, HTML)
 
 ## Installation
 
@@ -27,9 +38,12 @@ import { VoiceShoppingList } from 'voice-shopping-list';
 
 function App() {
   return (
-    <div className="App">
-      <h1>My Shopping List</h1>
-      <VoiceShoppingList />
+    <div className="container mx-auto p-4">
+      <VoiceShoppingList 
+        title="Grocery List"
+        language="en-US"
+        enableStorage={true}
+      />
     </div>
   );
 }
@@ -37,23 +51,57 @@ function App() {
 export default App;
 ```
 
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `title` | string | "Shopping List" | Title for the shopping list |
+| `placeholder` | string | "Add an item..." | Placeholder text for the input field |
+| `language` | string | "en-US" | Language for speech recognition |
+| `maxItems` | number | 100 | Maximum number of items to keep in history |
+| `storageKey` | string | "voice-shopping-list" | Local storage key for persisting the list |
+| `enableStorage` | boolean | true | Enable or disable local storage persistence |
+| `className` | string | "" | Custom CSS class for the component |
+| `onListChange` | function | undefined | Event handler for when the list changes |
+
+## Voice Commands
+
+The component recognizes the following voice commands:
+
+- "Clear list", "Clear the list", "Start over" - Clears the entire list
+- "Delete last", "Remove last", "Undo last" - Removes the last added item
+- "Mark all as done", "Complete all", "Check all" - Marks all items as completed
+
+## Server API Integration
+
+By default, the component tries to use the browser's Web Speech API. If that's not available, it falls back to the Vista API endpoint at `http://178.183.101.202:3001`.
+
+## Browser Compatibility
+
+The Web Speech API is supported in:
+- Chrome
+- Edge
+- Safari (limited support)
+- Firefox (limited support)
+
+For browsers without Web Speech API support, the component falls back to using the Vista API endpoint.
+
 ## Development
 
-To develop locally:
+To build the component locally:
 
-1. Clone this repository
-2. Install dependencies with `npm install` or `yarn`
-3. Start the development server with `npm run dev` or `yarn dev`
-4. Build for production with `npm run build` or `yarn build`
+```bash
+# Clone the repo
+git clone https://github.com/Szowesgad/voice-shopping-list.git
+cd voice-shopping-list
 
-## Browser Support
+# Install dependencies
+npm install
 
-This component uses the Web Speech API, which is supported in:
-- Chrome (desktop & Android)
-- Edge
-- Safari (desktop & iOS)
-- Firefox (limited support)
+# Start development server
+npm run dev
+```
 
 ## License
 
-MIT
+MIT © [div0.space](https://github.com/Szowesgad)
