@@ -1,126 +1,169 @@
 # Installation Guide
 
-This guide will help you set up and run the Voice Shopping List component in your project.
+This guide will walk you through the complete setup process for the Voice Shopping List component, including the required server components for speech recognition.
 
-## Prerequisites
+## 🌟 Quick Start: The Magic 3-Step Sequence
 
-- Node.js 18.x or later
-- pnpm 8.x or later (recommended) or npm/yarn
-- Access to a Whisper API service (optional)
-  - Local server (vistacare.node) 
-  - OpenAI Whisper API
-  - Other compatible API
-
-## Quick Installation
-
-For the simplest setup, you can use the provided installation script:
+For the most efficient setup, follow these three steps in order:
 
 ```bash
-# Make the script executable
-chmod +x installation.sh
+# Step 1: Initialize the Whisper model (downloads model & builds whisper.cpp)
+cd server
+chmod +x model_init.sh
+./model_init.sh
 
-# Run the script
+# Step 2: Start the transcription server
+chmod +x server_init.sh
+./server_init.sh
+
+# Step 3: In a new terminal, install and run the frontend component
+cd ..
+chmod +x installation.sh
 ./installation.sh
 ```
 
-The script will:
-1. Check prerequisites
-2. Verify the server is running (if using local server)
-3. Install dependencies
-4. Set up environment variables
+This sequence ensures that:
+1. The Whisper model is properly downloaded and compiled
+2. The transcription server is running correctly
+3. The frontend component is installed with the proper configuration
 
-## Manual Installation
+## Prerequisites
 
-If you prefer to install manually, follow these steps:
+- Node.js 18.x for server, 16.x+ for frontend
+- pnpm 8.x or later (recommended) or npm/yarn
+- git, cmake, and curl (for model_init.sh)
+- 2GB+ free disk space for model files
+- Basic understanding of terminal/command-line operations
 
-### 1. Install dependencies
+## Detailed Installation Steps
+
+### Step 1: Initialize Whisper Model
+
+The `model_init.sh` script performs several important tasks:
+- Checks prerequisites (node, pnpm, curl, git, cmake)
+- Verifies that Node.js version is 18.x for server compatibility
+- Creates required directories: uploads, models, build
+- Downloads your selected Whisper model (small, medium, or large)
+- Builds and installs whisper.cpp with proper library handling
 
 ```bash
-# Using pnpm (recommended)
-pnpm install
-
-# Using npm
-npm install
-
-# Using yarn
-yarn install
+cd server
+chmod +x model_init.sh
+./model_init.sh
 ```
 
-### 2. Configure environment variables
+During this process, you'll be asked to:
+1. Select which model to download (small, medium, large)
+2. Confirm building whisper.cpp from source
 
-Create a `.env` file in the root of your project:
+> 💡 **Tip**: The large model (1.6GB) provides the best accuracy, but the medium model (800MB) offers a good balance of speed and accuracy.
+
+### Step 2: Start the Transcription Server
+
+The `server_init.sh` script:
+- Installs server dependencies using pnpm
+- Starts the server in development mode
+
+```bash
+chmod +x server_init.sh
+./server_init.sh
+```
+
+You should see output confirming:
+- Model file found
+- Whisper binary ready
+- Server running at http://0.0.0.0:3001
+
+> ⚠️ **Important**: Keep this terminal window open and server running. You'll need to open a new terminal for the next step.
+
+### Step 3: Install and Run the Frontend
+
+In a new terminal window, navigate back to the project root and run:
+
+```bash
+cd ..  # Return to project root (if you're still in the server directory)
+chmod +x installation.sh
+./installation.sh
+```
+
+The `installation.sh` script:
+- Checks for Node.js and pnpm
+- Verifies the server is running
+- Creates an environment configuration (.env)
+- Installs frontend dependencies
+- Builds and starts the development server
+
+When complete, you can access the component at http://localhost:3000.
+
+## Environment Configuration
+
+The installation creates a `.env` file with sensible defaults. You can customize these settings:
 
 ```
-# API endpoints - uncomment and configure the one you're using
+# API endpoints - uncomment and configure as needed
 
 # Local vistacare.node server (default)
 VITE_API_URL=http://localhost:3001
 
-# Remote vistacare.node server
+# Remote vistacare.node server - use for team environments
 # VITE_API_URL=http://your-remote-ip:3001
 
-# OpenAI Whisper API 
+# OpenAI Whisper API - alternative to running your own server
 # VITE_USE_OPENAI_API=true
 # VITE_OPENAI_API_KEY=your-api-key-here
-# VITE_OPENAI_API_URL=https://api.openai.com/v1/audio/transcriptions
 ```
-
-### 3. Start the development server
-
-```bash
-# Using pnpm
-pnpm dev
-
-# Using npm
-npm run dev
-
-# Using yarn
-yarn dev
-```
-
-## Server Configuration
-
-### Local Server (vistacare.node)
-
-If you're using the local vistacare.node server:
-
-1. Make sure the server is running before starting the frontend
-2. The server should be accessible at http://localhost:3001
-3. Verify server health with: `curl http://localhost:3001/health`
-
-### OpenAI Whisper API
-
-If you're using the OpenAI Whisper API:
-
-1. Sign up for an API key at [OpenAI](https://platform.openai.com/)
-2. Set the environment variables:
-   - `VITE_USE_OPENAI_API=true`
-   - `VITE_OPENAI_API_KEY=your-api-key-here`
 
 ## Troubleshooting
 
-### Server Connection Issues
+### Model Download Issues
 
-If you're having trouble connecting to the server:
+If you encounter problems downloading the model:
+- Ensure you have a stable internet connection
+- Try a smaller model if disk space is limited
+- Check the `models` directory for partial downloads and remove them
 
-1. Verify the server is running with: `curl http://localhost:3001/health`
-2. Check your firewall settings if using a remote server
-3. Ensure the correct URL is set in your `.env` file
+### Server Won't Start
 
-### React Hook Errors
+If the server fails to start:
+- Ensure Node.js 18.x is active (`node --version`)
+- Check that model_init.sh completed successfully
+- Verify the whisper model and binary exist in the `models` directory
 
-If you encounter errors about invalid hook calls:
+### Frontend Connection Issues
 
-1. Make sure you're using React 16.8 or later
-2. Verify you don't have multiple versions of React in your project
-3. Ensure the component is only used within React function components
+If the frontend can't connect to the server:
+- Ensure the server is running at http://localhost:3001
+- Verify your `.env` file has the correct `VITE_API_URL`
+- Check if your firewall is blocking local connections
 
-### Speech Recognition Not Working
+## Alternative: Manual Installation
 
-1. Check browser compatibility (Chrome and Edge have best support)
-2. Verify microphone permissions are granted
-3. Ensure server is accessible if using API-based recognition
+If you prefer to install components individually:
 
-## Additional Configuration
+### Server Setup
 
-See the `README.md` file for detailed information on component props and customization options.
+```bash
+cd server
+pnpm install
+# Download model manually from HuggingFace: https://huggingface.co/ggerganov/whisper.cpp
+# Place model in server/models directory
+# Clone and build whisper.cpp following instructions at: https://github.com/ggerganov/whisper.cpp
+pnpm dev
+```
+
+### Frontend Setup
+
+```bash
+pnpm install
+# Create .env file manually with VITE_API_URL=http://localhost:3001
+pnpm dev
+```
+
+## Going to Production
+
+For production deployment:
+1. Build the server component separately
+2. Configure the frontend to point to your deployed server
+3. Build the frontend for production with `pnpm build`
+
+See the README for more details on component configuration and usage.
