@@ -64,6 +64,11 @@ check_server() {
     else
         warn_msg "Server is not accessible at $server_url"
         
+        echo -e "${YELLOW}⚠️ Server not detected! You should run the following commands first:${NC}"
+        echo -e "${YELLOW}  1. cd server${NC}"
+        echo -e "${YELLOW}  2. ./model_init.sh${NC}"
+        echo -e "${YELLOW}  3. ./server_init.sh${NC}"
+        
         read -p "Do you want to continue anyway? [y/N]: " continue_anyway
         if [[ "$continue_anyway" =~ ^[Yy]$ ]]; then
             warn_msg "Continuing without server. Some features may not work correctly."
@@ -99,26 +104,6 @@ verify_pnpm_version
 DEFAULT_SERVER_URL="http://localhost:3001"
 check_server "$DEFAULT_SERVER_URL"
 
-# Create .env.example if it doesn't exist
-if [ ! -f ".env.example" ]; then
-    echo "Creating .env.example file..."
-    cat > .env.example << 'EOL'
-# API endpoints - uncomment and configure the one you're using
-
-# Local vistacare.node server (default)
-VITE_API_URL=http://localhost:3001
-
-# Remote vistacare.node server
-# VITE_API_URL=http://your-remote-ip:3001
-
-# OpenAI Whisper API 
-# VITE_USE_OPENAI_API=true
-# VITE_OPENAI_API_KEY=your-api-key-here
-# VITE_OPENAI_API_URL=https://api.openai.com/v1/audio/transcriptions
-EOL
-    success_msg "Created .env.example file"
-fi
-
 # Create .env from .env.example if it doesn't exist
 create_env_file
 
@@ -133,6 +118,7 @@ echo "🧪 Creating development build..."
 pnpm build || error_exit "Failed to build project"
 success_msg "Build completed successfully"
 
+echo "🚀 Starting development server..."
 echo -e "${GREEN}Installation completed successfully!${NC}"
-echo "You can now run the project with: pnpm dev"
-echo "See INSTALLATION.md for more configuration options"
+echo "Starting development server with: pnpm dev"
+pnpm dev
