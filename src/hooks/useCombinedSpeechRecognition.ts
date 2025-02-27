@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSpeechRecognition } from './useSpeechRecognition';
 import { useVistaApiSpeechRecognition } from './useVistaApiSpeechRecognition';
+import { useOpenAiWhisperRecognition } from './useOpenAiWhisperRecognition';
 import type { SpeechRecognitionHook } from '../types';
 
-export type RecognitionMethod = 'browser' | 'api' | 'auto';
+// Get API settings from environment variables
+const USE_OPENAI_API = import.meta.env.VITE_USE_OPENAI_API === 'true';
+
+export type RecognitionMethod = 'browser' | 'api' | 'openai' | 'auto';
 
 interface CombinedSpeechRecognitionOptions {
   /**
@@ -20,7 +24,7 @@ interface CombinedSpeechRecognitionOptions {
   
   /**
    * API endpoint for Vista speech recognition service
-   * @default 'http://178.183.101.202:3001/api/transcribe'
+   * @default from environment variables or 'http://localhost:3001/api/transcribe'
    */
   apiEndpoint?: string;
   
@@ -39,17 +43,21 @@ interface CombinedSpeechRecognitionOptions {
 export function useCombinedSpeechRecognition({
   method = 'auto',
   language = 'en-US',
-  apiEndpoint = 'http://178.183.101.202:3001/api/transcribe',
+  apiEndpoint,
   mimeType = 'audio/webm',
 }: CombinedSpeechRecognitionOptions = {}): SpeechRecognitionHook & {
   activeMethod: RecognitionMethod;
   setMethod: (method: RecognitionMethod) => void;
 } {
-  // Initialize both recognition hooks
+  // Initialize all recognition hooks
   const browserRecognition = useSpeechRecognition({ language });
   const apiRecognition = useVistaApiSpeechRecognition({
     apiEndpoint,
     language,
+    mimeType,
+  });
+  const openaiRecognition = useOpenAiWhisperRecognition({
+    language: language.split('-')[0], // OpenAI uses 'en' not 'en-US'
     mimeType,
   });
   
@@ -59,14 +67,23 @@ export function useCombinedSpeechRecognition({
   // Determine which method to use based on preference and support
   useEffect(() => {
     if (method === 'auto') {
-      setActiveMethod(browserRecognition.supported ? 'browser' : 'api');
+      if (browserRecognition.supported) {
+        setActiveMethod('browser');
+      } else if (USE_OPENAI_API && openaiRecognition.supported) {
+        setActiveMethod('openai');
+      } else if (apiRecognition.supported) {
+        setActiveMethod('api');
+      }
     } else {
       setActiveMethod(method);
     }
-  }, [method, browserRecognition.supported]);
+  }, [method, browserRecognition.supported, apiRecognition.supported, openaiRecognition.supported]);
   
   // Get the currently active recognition instance
-  const recognition = activeMethod === 'browser' ? browserRecognition : apiRecognition;
+  const recognition = 
+    activeMethod === 'browser' ? browserRecognition : 
+    activeMethod === 'openai' ? openaiRecognition : 
+    apiRecognition;
   
   // Combined state
   const [transcript, setTranscript] = useState('');
@@ -86,25 +103,31 @@ export function useCombinedSpeechRecognition({
     // Check if the current method is supported
     if (
       (activeMethod === 'browser' && !browserRecognition.supported) ||
-      (activeMethod === 'api' && !apiRecognition.supported)
+      (activeMethod === 'api' && !apiRecognition.supported) ||
+      (activeMethod === 'openai' && !openaiRecognition.supported)
     ) {
-      const fallbackMethod = activeMethod === 'browser' ? 'api' : 'browser';
-      const fallbackSupported = 
-        fallbackMethod === 'browser' 
-          ? browserRecognition.supported 
-          : apiRecognition.supported;
+      // Try to find a supported method
+      const availableMethods: RecognitionMethod[] = [];
+      if (browserRecognition.supported) availableMethods.push('browser');
+      if (openaiRecognition.supported) availableMethods.push('openai');
+      if (apiRecognition.supported) availableMethods.push('api');
       
-      if (fallbackSupported) {
-        // Switch to fallback and use it
+      if (availableMethods.length > 0) {
+        // Use the first available method
+        const fallbackMethod = availableMethods[0];
         setActiveMethod(fallbackMethod);
+        
+        // Start listening with the fallback method
         if (fallbackMethod === 'browser') {
           browserRecognition.startListening();
+        } else if (fallbackMethod === 'openai') {
+          openaiRecognition.startListening();
         } else {
           apiRecognition.startListening();
         }
       } else {
         // No method is supported
-        setError('Speech recognition is not supported in this browser');
+        setError('Speech recognition is not supported in this browser or API configuration');
       }
     } else {
       // Use the current method
@@ -115,6 +138,7 @@ export function useCombinedSpeechRecognition({
     recognition, 
     browserRecognition, 
     apiRecognition,
+    openaiRecognition
   ]);
   
   // Stop listening function
@@ -135,14 +159,30 @@ export function useCombinedSpeechRecognition({
       recognition.stopListening();
     }
     
-    setActiveMethod(newMethod === 'auto' 
-      ? (browserRecognition.supported ? 'browser' : 'api')
-      : newMethod
-    );
-  }, [recognition, browserRecognition.supported]);
+    if (newMethod === 'auto') {
+      // Auto-select the best available method
+      if (browserRecognition.supported) {
+        setActiveMethod('browser');
+      } else if (USE_OPENAI_API && openaiRecognition.supported) {
+        setActiveMethod('openai');
+      } else if (apiRecognition.supported) {
+        setActiveMethod('api');
+      }
+    } else {
+      setActiveMethod(newMethod);
+    }
+  }, [
+    recognition, 
+    browserRecognition.supported, 
+    apiRecognition.supported,
+    openaiRecognition.supported
+  ]);
   
   // Combined support status
-  const supported = browserRecognition.supported || apiRecognition.supported;
+  const supported = 
+    browserRecognition.supported || 
+    apiRecognition.supported || 
+    openaiRecognition.supported;
   
   return {
     transcript,
