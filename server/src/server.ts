@@ -19,7 +19,7 @@ const port = 3001;
 
 // Allow both development endpoints
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://192.168.1.111:3000', 'http://178.183.101.202:3000'],
+  origin: ['http://localhost:3000'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type']
 }));
